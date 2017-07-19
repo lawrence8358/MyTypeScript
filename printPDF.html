@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>PDF 列印</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="google" content="notranslate">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.2.min.js"></script>
+    <script src="printjs/print.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="printjs/print.min.css">
+    <script src="printjs/print.min.js"></script>
+
+    <script src="pdfPrint.js"></script>
+
+</head>
+
+<body>
+    <span id='LabelShow'></span>
+    <div id='myDiv' style='display:none'>
+        這是我的輸出
+    </div>
+    <div id='pdfDiv'></div>
+    <div id='iePrintDiv'></div>
+    <script type="text/javascript">
+        var printObj = new PDFPrint('myDiv');
+        function hideLoadBar() {
+            if (printObj) printObj.hideLoadingDiv();
+        }
+        var output = 'Detecting browsers by ducktyping:<hr>';
+        output += 'isFirefox: ' + printObj.isFirefox + '<br>';
+        output += 'isChrome: ' + printObj.isChrome + '<br>';
+        output += 'isSafari: ' + printObj.isSafari + '<br>';
+        output += 'isOpera: ' + printObj.isOpera + '<br>';
+        output += 'isIE: ' + printObj.isIE + '<br>';
+        output += 'isEdge: ' + printObj.isEdge + '<br>';
+        output += 'isBlink: ' + printObj.isBlink + '<br>';
+        document.getElementById('LabelShow').innerHTML = output;
+
+        //輸出DIV內元素
+        function PrintElem(elem) {
+            var mywindow = window.open('', 'PrintWindow', 'height=0,width=0');
+
+            mywindow.document.write('<html><head><style>*{ margin: 0; padding: 0; }</style></head>');
+            mywindow.document.write('<body >');
+            mywindow.document.write(document.getElementById(elem).innerHTML);
+            mywindow.document.write('</body></html>');
+
+            mywindow.document.close(); // necessary for IE >= 10
+            mywindow.focus(); // necessary for IE >= 10*/
+
+            mywindow.print();
+            mywindow.close();
+
+            return true;
+        }
+
+        //新增Iframe透過表單送出
+        function IframeForm() {
+            //have a div in your html somewhere with this id. height=0 width=0
+            var div = document.getElementById('pdfDiv');
+            //we make a new iframe every time we print or the DOM manipulation below breaks
+            div.innerHTML = '<iframe width="100" height="100" id="pdfFrame"></iframe>';
+            var frame = document.getElementById('pdfFrame');
+            frame.contentWindow.document.open();
+            //add a <body> to the iframe so we can add a form to it below
+            frame.contentWindow.document.write('<body></body>');
+            frame.contentWindow.document.close();
+
+            var url = '/pdfSource/small.pdf';
+            //make a form to call the url above and return the pdf
+            var form = frame.contentWindow.document.createElement("form");
+            form.setAttribute("id", "pdfForm");
+            form.setAttribute("method", "get");
+            form.setAttribute("action", url);
+            //add as many input fields as your service needs
+            var field = document.createElement("input");
+            field.setAttribute("name", 'token');
+            field.setAttribute("value", "A");
+            form.appendChild(field);
+            //add the form to the new iframe body
+            frame.contentWindow.document.body.appendChild(form);
+            //wait until the pdf has loaded until printing just this hidden frame, not the surrounding page
+            frame.onload = function () {
+                frame.contentWindow.focus();
+                if (frame.contentWindow.document.execCommand('print', false, null)) {
+                    frame.contentWindow.print();
+                }
+            };
+            //start loading the pdf from the server
+            form.submit();
+        }
+
+        function loadPrintData() {
+            alert('load div complete');
+        }
+
+        function IEPrint() {
+            printObj.printPdfUrl('/pdfSource/small.pdf', loadPrintData);
+        }
+
+        //提供給PDFJS隱藏Loading Bar使用
+        function hideLoadBar() { 
+            pdfJsPrint.hideLoadingDiv();
+            printObj.hideLoadingDiv();
+        }
+    </script>
+
+    <script src="PDFJsPrint.js"></script>
+    <script>
+        var pdfJsPrint = new PDFJSPrint();
+
+        function usingPDFJs() {
+            pdfJsPrint.pdfJsPath = 'pdfjs/web/viewer.html?file=';
+            pdfJsPrint.printPdfUrl('/pdfSource/big.pdf');
+        }
+    </script>
+
+    <button onclick=" printObj.printPdfUrl('/pdfSource/big.pdf');">載入PDF檔案(會針對不同瀏覽器執行不同的類別庫)</button>
+    <BR>
+    <button onclick="PrintElem('myDiv');">列印DIV的內容</button>
+    <BR>
+    <button onclick="IframeForm()">載入IFrame透過表單送出，只有Chrom work</button>
+    <BR>
+    <button onclick="IEPrint();">IE Small</button>
+    <BR>
+    <button onclick="usingPDFJs();">使用PDFJS列印大檔案</button>
+</body>
+
+</html>

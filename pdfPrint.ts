@@ -221,7 +221,7 @@ class PDFPrint {
             catch (e) {
                 if ($this._iePrintCount <= 10) {
                     $this._iePrintCount++;
-                    $this.printEmbedPdf($this);
+                    $this.printEmbedPdf2($this);
                 }
                 else {
                     $this._iePrintCount = 0;
